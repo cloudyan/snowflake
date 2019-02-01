@@ -39,6 +39,7 @@ export default class SnowFlake {
     this.workerIdBits = 5n;
     this.dataCenterIdBits = 5n;
     this.sequenceBits = 12n;
+    // this.timestampBits = 41n;
 
     // 支持的最大十进制id
     // 这个移位算法可以很快的计算出几位二进制数所能表示的最大十进制数
