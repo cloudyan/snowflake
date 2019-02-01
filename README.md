@@ -179,6 +179,7 @@ BigInt
   - [ES proposal: BigInt – arbitrary precision integers](http://2ality.com/2017/03/es-integer.html)
 - [MDN BigInt 语法](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt)
 - [tc39: proposal-bigint](https://github.com/tc39/proposal-bigint)
+- [Javascript 提案 BigInt 的一些坑](https://zhuanlan.zhihu.com/p/36385254)
 
 关于限制为仅64位整数，需要特定处理，可以提示数据长度溢出了。
 
