@@ -13,15 +13,16 @@ SnowFlake可以保证：
   - 可以通过分布式缓存来保存机器ID和workid之间的映射关系。启动的时候访问分布式缓存查询当前机器ID对应的workid，如果查询不到则获取一个并保存到分布式缓存中。
 - lastTimestamp上次生成ID的时间戳，这个是在内存中，系统时钟回退+重启后呢？无法保证
   - 目前好像只能流程上控制系统时钟不回退。
-- `(timestamp - this.twepoch) << this.timestampLeftShift` 超过长整型怎么办？
+- 41位 `(timestamp - this.twepoch) << this.timestampLeftShift` 超过长整型怎么办？
   - this.twepoch 可以设置当前开始使用系统时的时间，可以保证69年不超
 - Javascript 无法支持> 53位的数字怎么办？
   - js `Number`被表示为双精度浮点数，最大值为 `Number.MAX_SAFE_INTEGER` = `2^53-1`
   - `BigInt` 是 JavaScript 中的一个新的原始数字类型，可以用任意精度表示整数。即使超出 `Number` 的安全整数范围限制，也可以安全地存储和操作大整数。
   - 要创建一个 `BigInt`，将 `n` 作为后缀添加到任何整数文字字面量
-- `BigInt` 可以用任意精度表示整数，那怎么控制是 64bits 长整型，左移溢出会出现问题吗？
-  - 这里不做处理会出现问题，应报错提示长度超出 64bits 溢出
-  - 如何处理，待定！！！
+- `BigInt` 支持大数，那怎么控制这里用 64bits 长整型，左移溢出会出现问题吗？
+  - 这里不做处理会出现问题，`BigInt` 可以用任意精度表示整数
+  - 如何处理？**暂不处理**
+    - 此问题本质还是上面的41位时间差问题，**69年不超，再长就超了**，需要重新设计支持，也可以做溢出提示。
     - 如果想限制为仅64位整数，则必须始终使用强制转换 `BigInt.asIntN` `BigInt.asUintN`
     - 只要我们传递 `BigInt` 超过 64 位整数范围的值（例如，63 位数值 + 1 位符号位），就会发生溢出。
 
@@ -179,10 +180,19 @@ BigInt
 - [MDN BigInt 语法](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt)
 - [tc39: proposal-bigint](https://github.com/tc39/proposal-bigint)
 
+关于限制为仅64位整数，需要特定处理，可以提示数据长度溢出了。
+
 ```js
+// 在 console 中测试，溢出怎么办，怎么检查出问题了
+var aa = 1n;
+(aa<<62n).toString(2).padStart(64, 0);
+(aa<<65n).toString(2).padStart(64, 0);
+(BigInt.asIntN(64, aa<<62n)).toString(2).padStart(64, 0);
+(BigInt.asIntN(64, aa<<65n)).toString(2).padStart(64, 0);
+
 const max = 2n ** (64n - 1n) - 1n;
-BigInt.asIntN(64, max);
-BigInt.asUintN(64, max);
+BigInt.asIntN(64, max); // 有符号数
+BigInt.asUintN(64, max); // 无符号数
 → 9223372036854775807n
 BigInt.asIntN(64, max + 1n);
 
