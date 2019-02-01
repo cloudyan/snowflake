@@ -7,6 +7,24 @@ SnowFlake可以保证：
 - 所有生成的id按时间趋势递增
 - 整个分布式系统内不会产生重复id（因为有`datacenterId`和`workerId`来做区分）
 
+问题？
+
+- workid 怎么保证唯一？
+  - 可以通过分布式缓存来保存机器ID和workid之间的映射关系。启动的时候访问分布式缓存查询当前机器ID对应的workid，如果查询不到则获取一个并保存到分布式缓存中。
+- lastTimestamp上次生成ID的时间戳，这个是在内存中，系统时钟回退+重启后呢？无法保证
+  - 目前好像只能流程上控制系统时钟不回退。
+- `(timestamp - this.twepoch) << this.timestampLeftShift` 超过长整型怎么办？
+  - this.twepoch 可以设置当前开始使用系统时的时间，可以保证69年不超
+- Javascript 无法支持> 53位的数字怎么办？
+  - js `Number`被表示为双精度浮点数，最大值为 `Number.MAX_SAFE_INTEGER` = `2^53-1`
+  - `BigInt` 是 JavaScript 中的一个新的原始数字类型，可以用任意精度表示整数。即使超出 `Number` 的安全整数范围限制，也可以安全地存储和操作大整数。
+  - 要创建一个 `BigInt`，将 `n` 作为后缀添加到任何整数文字字面量
+- `BigInt` 可以用任意精度表示整数，那怎么控制是 64bits 长整型，左移溢出会出现问题吗？
+  - 这里不做处理会出现问题，应报错提示长度超出 64bits 溢出
+  - 如何处理，待定！！！
+    - 如果想限制为仅64位整数，则必须始终使用强制转换 `BigInt.asIntN` `BigInt.asUintN`
+    - 只要我们传递 `BigInt` 超过 64 位整数范围的值（例如，63 位数值 + 1 位符号位），就会发生溢出。
+
 ## 概述
 
 SnowFlake算法生成id的结果是一个64bit大小的整数，它的结构如下图：
@@ -37,8 +55,11 @@ https://segmentfault.com/a/1190000011282426
 ### 位运算基础
 
 - 在计算机中，负数的二进制是用补码来表示的。
+  - 反码 = 除符号位, 原码其余位取反而得
   - 补码 = 反码 + 1
   - 补码 = （原码 - 1）再取反码
+- 在计算机中无符号数用原码表示, 有符号数用补码表示
+  <!-- - w位补码表示的值为(MathJax) `-x_{w-1}2^{w-1}+{\sum_{i=1}^{w-2}x_{i}2^{i}}` -->
 
 补码的意义就是可以拿补码和原码（3的二进制）相加，最终加出一个“溢出的0”
 
@@ -142,12 +163,31 @@ or 0|                                              |     |      |‭0000 0000000
 
 参考：
 
-雪花算法以及 BigInt
+雪花算法
 
 - [Twitter官方原版](https://github.com/twitter/snowflake/blob/snowflake-2010/src/main/scala/com/twitter/service/snowflake/IdWorker.scala) 用Scala写的
-- [Twitter的雪花算法（snowflake）自增ID](https://blog.csdn.net/xiaopeng9275/article/details/72123709)
+- [Twitter ID（Snowflake）](https://developer.twitter.com/en/docs/basics/twitter-ids)
+- [ID生成器，Twitter的雪花算法（Java）](https://blog.csdn.net/xiaopeng9275/article/details/72123709)
 - [理解分布式id生成算法SnowFlake](https://segmentfault.com/a/1190000011282426)
+
+BigInt
+
 - [BigInt：JavaScript 中的任意精度整数](https://zhuanlan.zhihu.com/p/36330307)
+- [BigInt: arbitrary-precision integers in JavaScript](https://developers.google.com/web/updates/2018/05/bigint)
+  - [chrome jsbi](https://github.com/GoogleChromeLabs/jsbi#why)
+  - [ES proposal: BigInt – arbitrary precision integers](http://2ality.com/2017/03/es-integer.html)
+- [MDN BigInt 语法](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt)
+- [tc39: proposal-bigint](https://github.com/tc39/proposal-bigint)
+
+```js
+const max = 2n ** (64n - 1n) - 1n;
+BigInt.asIntN(64, max);
+BigInt.asUintN(64, max);
+→ 9223372036854775807n
+BigInt.asIntN(64, max + 1n);
+
+new BigInt64Array(4)
+```
 
 jest
 

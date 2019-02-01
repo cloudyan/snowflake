@@ -32,8 +32,8 @@ export default class SnowFlake {
    * @param {bigint} sequence 毫秒内序列 (0~4095)
    */
   constructor(workerId = 1n, dataCenterId = 1n, sequence = 0n) {
-    // 开始时间截 (2015-01-01)，这个可以随意设置
-    this.twepoch = 1489111610226n;
+    // 开始时间截 (2018-02-01)，这个可以设置开始使用该系统的时间，可往后使用69年
+    this.twepoch = 1548988646430n;
 
     // 位数划分 [数据标识id(5bit 31)、机器id(5bit 31)](合计共支持1024个节点)、序列id(12bit 4095)
     this.workerIdBits = 5n;
@@ -112,7 +112,7 @@ export default class SnowFlake {
     // 移位并通过或运算拼到一起组成64位的ID
     // 将各 bits 位数据移位后或运算合成一个大的64位二进制数据
     return (
-      ((timestamp - this.twepoch) << this.timestampLeftShift) | // 时间差左移22
+      ((timestamp - this.twepoch) << this.timestampLeftShift) | // 时间数据左移22
       (this.dataCenterId << this.dataCenterIdShift) | // 数据标识id左移 17
       (this.workerId << this.workerIdShift) | // 机器id左移 12
       this.sequence
