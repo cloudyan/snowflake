@@ -2,15 +2,24 @@
 
 分布式id生成算法的有很多种，Twitter的雪花算法（SnowFlake）就是其中经典的一种。
 
-SnowFlake可以保证：
+SnowFlake算法的优点：
 
-- 所有生成的id按时间趋势递增
+- 生成ID时不依赖于数据库，完全在内存生成，高性能高可用。
+- 容量大，每秒可生成几百万ID。
+  - SnowFlake算法在同一毫秒内最多可以生成多少个全局唯一ID呢？同一毫秒的ID数量 = 1024 * 4096 = 4194304
+- 所有生成的id按时间趋势递增，后续插入数据库的索引树的时候，性能较高。
 - 整个分布式系统内不会产生重复id（因为有`datacenterId`和`workerId`来做区分）
+
+SnowFlake算法的缺点：
+
+- 依赖于系统时钟的一致性。如果某台机器的系统时钟回拨，有可能造成ID冲突，或者ID乱序。
+- 还有，在启动之前，如果这台机器的系统时间回拨过，那么有可能出现ID重复的危险。
 
 问题？
 
-- workid 怎么保证唯一？
-  - 可以通过分布式缓存来保存机器ID和workid之间的映射关系。启动的时候访问分布式缓存查询当前机器ID对应的workid，如果查询不到则获取一个并保存到分布式缓存中。
+- workId 怎么保证唯一？
+  - 可以通过分布式缓存来保存机器ID和workId之间的映射关系。启动的时候访问分布式缓存查询当前机器ID对应的workId，如果查询不到则获取一个并保存到分布式缓存中。
+  - 可通过Zookeeper管理workId，免去手动频繁修改集群节点，去配置机器ID的麻烦。
 - lastTimestamp上次生成ID的时间戳，这个是在内存中，系统时钟回退+重启后呢？无法保证
   - 目前好像只能流程上控制系统时钟不回退。
 - 41位 `(timestamp - this.twepoch) << this.timestampLeftShift` 超过长整型怎么办？
@@ -170,6 +179,7 @@ or 0|                                              |     |      |‭0000 0000000
 - [Twitter ID（Snowflake）](https://developer.twitter.com/en/docs/basics/twitter-ids)
 - [ID生成器，Twitter的雪花算法（Java）](https://blog.csdn.net/xiaopeng9275/article/details/72123709)
 - [理解分布式id生成算法SnowFlake](https://segmentfault.com/a/1190000011282426)
+- [](https://blog.csdn.net/crazymakercircle/article/details/85887254)
 
 BigInt
 

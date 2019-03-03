@@ -31,7 +31,7 @@ export default class SnowFlake {
    * @param {bigint} dataCenterId 数据中心ID (0~31)
    * @param {bigint} sequence 毫秒内序列 (0~4095)
    */
-  constructor(workerId = 1n, dataCenterId = 1n, sequence = 0n) {
+  constructor(workerId, dataCenterId) {
     // 开始时间截 (2018-02-01)，这个可以设置开始使用该系统的时间，可往后使用69年
     this.twepoch = 1548988646430n;
 
@@ -63,12 +63,12 @@ export default class SnowFlake {
     this.lastTimestamp = -1n;
 
     const { maxWorkerId, maxDataCenterId } = this;
-    if (workerId > maxWorkerId || workerId < 0) {
+    if (workerId > maxWorkerId || workerId < 0n) {
       throw new Error(
         `workerId can't be greater than ${maxWorkerId} or less than 0`
       );
     }
-    if (dataCenterId > maxDataCenterId || dataCenterId < 0) {
+    if (dataCenterId > maxDataCenterId || dataCenterId < 0n) {
       throw new Error(
         `dataCenterId can't be greater than ${maxDataCenterId} or less than 0`
       );
@@ -145,7 +145,7 @@ export default class SnowFlake {
 //  测试
 // function main() {
 //   console.time('id');
-//   const idWorker = new SnowFlake(1n, 1n, 0n);
+//   const idWorker = new SnowFlake(1n, 1n);
 
 //   const tempIds = [];
 //   for (let i = 0; i < 50000; i++) {
