@@ -1,5 +1,7 @@
 # snowflake
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/cloudyan/snowflake.svg)](https://greenkeeper.io/)
+
 分布式id生成算法的有很多种，Twitter的雪花算法（SnowFlake）就是其中经典的一种。
 
 SnowFlake算法的优点：
